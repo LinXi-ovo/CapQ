@@ -20,6 +20,8 @@ class Config {
     static trimmarkdown := 0
     static historyMax  := 2000
     static historyDays := 90
+    ; 打开链接后是否把浏览器窗口切到前台（1=切，0=留在后台）
+    static urlActivate := 1
 
     ; ── 运行期 ───────────────────────────────────────────
     static iniPath     := ""
@@ -47,6 +49,7 @@ class Config {
         this.trimmarkdown := Integer(this.Num(IniRead(this.iniPath, "ui", "trimmarkdown", this.trimmarkdown), 0))
         this.historyMax  := Integer(this.Num(IniRead(this.iniPath, "ui", "historyMax", this.historyMax), 2000))
         this.historyDays := Integer(this.Num(IniRead(this.iniPath, "ui", "historyDays", this.historyDays), 90))
+        this.urlActivate := Integer(this.Num(IniRead(this.iniPath, "ui", "urlActivate", this.urlActivate), 1))
 
         ; 环境变量最后覆盖，优先级高于 ini
         this.ApplyEnv()
@@ -148,6 +151,7 @@ class Config {
         trimmarkdown=0
         historyMax=2000
         historyDays=90
+        urlActivate=1
         )"
         try FileDelete this.iniPath
         ; 必须用 UTF-8-RAW：带 BOM 会让 IniRead 把首段读成 "\uFEFFapi"，
