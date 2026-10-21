@@ -13,7 +13,15 @@ class HistoryPanel {
     static keyword  := ""
     static rows     := []          ; ListView 行 -> 记录
 
+    ; 防抖：按住热键会连发，Toggle 被反复调用就会疯狂开关（窗口乱闪）
+    static lastToggle := 0
+
     static Toggle() {
+        now := A_TickCount
+        if (this.lastToggle && now - this.lastToggle < 350)
+            return
+        this.lastToggle := now
+
         if (IsObject(this.gui) && this.gui.Hwnd && DllCall("IsWindowVisible", "Ptr", this.gui.Hwnd)) {
             this.Hide()
             return

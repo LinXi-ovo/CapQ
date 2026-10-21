@@ -123,6 +123,16 @@ class Url {
         return t
     }
 
+    ; 防抖：按住热键会连发，放开前会被反复触发。
+    ; 不加这个就会连开一堆标签页、反复抢前台（表现就是窗口乱闪）。
+    ;
+    ; 只对「同一个 URL」做时间窗口去重：
+    ;   - 按住不放 → 同一个链接只开一次，不会闪
+    ;   - 换个链接马上按 → 立刻生效，不会觉得迟钝
+    static lastUrl   := ""
+    static lastUrlAt := 0
+    static sameUrlMs := 1500
+
     ; ── 打开剪贴板里的链接；返回 true/false ──
     static OpenClipboard() {
         txt := Clip.SafeRead()
@@ -132,6 +142,14 @@ class Url {
         u := this.Parse(txt)
         if (u = "")
             return Notify.Warn("剪贴板内容不是链接")
+
+        ; 同一个链接在时间窗口内不重复打开
+        now := A_TickCount
+        if (this.lastUrl != "" && u = this.lastUrl && now - this.lastUrlAt < this.sameUrlMs)
+            return false
+
+        this.lastUrl   := u
+        this.lastUrlAt := now
 
         if this.Open(u)
             Notify.Show(SubStr(u, 1, 200), "CapQ 已打开链接")

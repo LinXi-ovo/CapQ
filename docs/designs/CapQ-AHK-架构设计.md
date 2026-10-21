@@ -705,6 +705,51 @@ Can't open clipboard for writing.
 
 **修复**：顶层直接 `GPID := Run(...)`。
 
+### 10.10 热键会连发，每个入口都必须防抖
+
+`CapsLock & k` 这类组合热键在**按住不放时会被系统反复触发**（每 30ms 左右一次）。没有防抖时表现为：
+
+- 连开十几个浏览器标签页
+- 反复抢前台，屏幕疯狂闪烁
+- `CapsLock+O` 会把面板开开关关，闪成一片
+
+这不是"某个键的 bug"，而是**所有热键入口的共性问题**。
+
+**修复**：按语义选两道闸门。
+
+```ahk
+; 动作型（打开链接）：同一个目标 + 时间窗口内只执行一次
+static lastUrl   := ""
+static lastUrlAt := 0
+static sameUrlMs := 1500
+
+now := A_TickCount
+if (this.lastUrl != "" && u = this.lastUrl && now - this.lastUrlAt < this.sameUrlMs)
+    return false
+```
+
+```ahk
+; 开关型（面板 Toggle）：纯时间窗口，350ms
+static lastToggle := 0
+now := A_TickCount
+if (this.lastToggle && now - this.lastToggle < 350)
+    return
+this.lastToggle := now
+```
+
+**关键取舍**：时间窗口**只对同一个目标生效**，不要写成"全局窗口内一律不执行"。否则用户换个链接立刻按 `CapsLock+K` 会被吞掉，感觉是"按键失灵"——这比连发更难排查，因为它是静默失败。
+
+### 10.11 调试脚本不要用 `Stop-Process AutoHotkey*`
+
+排查时图省事写 `Get-Process AutoHotkey* | Stop-Process -Force`，会把**用户正在用的 CapQ 实例一起杀掉**。症状就是"按快捷键没反应"，而实际上是自己的调试命令干的。
+
+更糟的是如果同时有后台循环脚本在跑（本机就有一个别的项目目录在做 6 轮重试测试，每轮都先杀光 AHK 再启动），两边互相踩，会表现为"错误弹窗疯狂闪、杀不干净"。
+
+**规则**：
+- 精确定位 pid 再杀，或按命令行过滤
+- 自己起的进程用 `Run()` 返回的 pid 关，不要用通配
+- 遇到"杀不完的弹窗"，查 `Win32_Process` 的 `ParentProcessId` 往上追，找到拉起它的循环脚本
+
 ### 教训汇总
 
 | 现象 | 排查手法 |
@@ -714,5 +759,8 @@ Can't open clipboard for writing.
 | 定时器不触发 | 同上 |
 | 网络明明通却报 network | dump 实际命令行 + 实际请求体字节 |
 | 配置读了等于没读 | 查 BOM |
+| 窗口疯狂闪烁、标签页连开 | 热键连发，入口缺防抖 |
+| 快捷键"没反应" | 先确认进程还在——别是自己的调试命令 `Stop-Process` 杀的 |
+| 弹窗杀不完 | 往上追 `ParentProcessId`，找拉起它的循环脚本 |
 
 **最重要的排查基建**：所有错误只写日志、绝不弹窗（`OnError` 返回 `1`）；测试脚本一律 `/ErrorStdOut` + 进度写文件，因为进程被 kill 时 stdout 缓冲会丢。
