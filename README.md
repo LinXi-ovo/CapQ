@@ -102,12 +102,18 @@ AHK 是伪多线程：同步调用（WinHttp COM）会冻结整个消息泵，�
 
 ## 测试
 
+冒烟测试不联网、不需要 key：
+
 ```powershell
-# 冒烟测试（不联网、不需要 key）
-& "$env:LOCALAPPDATA\..\..\Program Files\AutoHotkey\v2\AutoHotkey64.exe" tests\smoke.ahk
+$ahk = "$env:ProgramFiles\AutoHotkey\v2\AutoHotkey64.exe"   # 装到默认位置时
+& $ahk tests\smoke.ahk
 ```
 
-测试脚本都设了 `OnError` 兜底，出错只写日志不弹窗；输出写在 `%TEMP%` 下的文本文件里。
+如果 AHK 装在别处（scoop、便携版），把 `$ahk` 换成实际路径即可。
+
+测试脚本都设了 `OnError` 兜底，出错只写日志不弹窗；结果输出在 `%TEMP%` 下的文本文件里，
+跑完看控制台或对应文件。`tests\json_roundtrip.ahk` 验证 JSON 序列化往返，
+`tests\e2e2.ahk` 需要有效配置才能真实打接口。
 
 ## License
 
