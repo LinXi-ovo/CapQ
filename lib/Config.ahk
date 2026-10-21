@@ -48,7 +48,60 @@ class Config {
         this.historyMax  := Integer(this.Num(IniRead(this.iniPath, "ui", "historyMax", this.historyMax), 2000))
         this.historyDays := Integer(this.Num(IniRead(this.iniPath, "ui", "historyDays", this.historyDays), 90))
 
+        ; 环境变量最后覆盖，优先级高于 ini
+        this.ApplyEnv()
+
         return this.Validate()
+    }
+
+    ; ── 环境变量覆盖 ─────────────────────────────────────
+    ; myllmurl     → 接口根地址（apiBase）
+    ; myllmapi     → API Key
+    ; myllmmodelid → 模型名
+    ; 用途：密钥不落盘。ini 里留空即可，全部从环境变量取。
+    static ApplyEnv() {
+        u := this.Env("myllmurl")
+        if (u != "")
+            this.apiBase := this.NormBase(u)
+
+        k := this.Env("myllmapi")
+        if (k != "")
+            this.key := k
+
+        ; 模型名：兼容两种写法
+        m := this.Env("myllmmodelid")
+        if (m = "")
+            m := this.Env("myllmmodel")
+        if (m != "")
+            this.model := m
+    }
+
+    ; 读环境变量并去掉首尾空白/引号（用户可能在系统设置里带了引号）
+    static Env(name) {
+        v := ""
+        try v := EnvGet(name)
+        catch
+            return ""
+        if (v = "" || !IsSet(v))
+            return ""
+        v := Trim(v " ", " `t`r`n")
+        ; 去掉可能被一起粘进来的成对引号
+        while (StrLen(v) >= 2) {
+            f := SubStr(v, 1, 1), l := SubStr(v, -1)
+            if ((f = '"' && l = '"') || (f = "'" && l = "'"))
+                v := Trim(SubStr(v, 2, StrLen(v) - 2), " `t`r`n")
+            else
+                break
+        }
+        return v
+    }
+
+    ; 归一化 base：去掉尾部斜杠，避免拼出 "//chat/completions"
+    static NormBase(u) {
+        u := Trim(u " ", " `t`r`n")
+        while (SubStr(u, -1) = "/")
+            u := SubStr(u, 1, StrLen(u) - 1)
+        return u
     }
 
     static Num(v, def) {
@@ -60,9 +113,9 @@ class Config {
     static Validate() {
         errs := []
         if (Trim(this.key) = "")
-            errs.Push("api.key 未设置（config.ini）")
+            errs.Push("API Key 未设置：设环境变量 myllmapi，或在 config.ini 的 [api] key= 填")
         if (Trim(this.apiBase) = "")
-            errs.Push("api.base 为空")
+            errs.Push("接口地址为空：设环境变量 myllmurl，或在 config.ini 的 [api] base= 填")
         if (Trim(this.model) = "")
             errs.Push("api.model 为空")
         if (this.maxtok < 1)

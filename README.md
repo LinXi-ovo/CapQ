@@ -28,15 +28,27 @@ chat UI — the answer lands where you can paste it immediately.
 ## 安装
 
 1. 装 [AutoHotkey v2](https://www.autohotkey.com/)（v2.0+，本项目在 v2.0.30 上验证）
-2. 复制配置模板并填入自己的 key：
+
+2. 设置三个环境变量（推荐，密钥不落盘）：
 
    ```powershell
-   Copy-Item config.example.ini config.ini
+   setx myllmurl     "https://api.deepseek.com"
+   setx myllmapi     "sk-your-key-here"
+   setx myllmmodelid "deepseek-chat"
    ```
 
-   然后编辑 `config.ini` 里的 `key=`。`config.ini` 已在 `.gitignore` 中，不会被提交。
+   `setx` 写入的是用户级变量，**新开的进程才读得到**（已开的终端/程序需重启）。
 
 3. 双击 `CapQ.ahk`。程序常驻托盘。
+
+也可以不用环境变量，复制 `config.example.ini` 为 `config.ini` 后直接填。
+**环境变量优先级高于 config.ini**，同时存在时以环境变量为准。
+
+| 环境变量 | 对应配置 | 说明 |
+| --- | --- | --- |
+| `myllmurl` | `[api] base` | 接口根地址，尾部斜杠会自动去掉 |
+| `myllmapi` | `[api] key` | API Key |
+| `myllmmodelid` | `[api] model` | 模型名（也接受 `myllmmodel`） |
 
 ## 配置
 
