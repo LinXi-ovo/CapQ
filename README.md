@@ -12,8 +12,30 @@ chat UI — the answer lands where you can paste it immediately.
 | `CapsLock + A` | 问当前剪贴板内容。**不带**对话历史，每次都是全新单轮 |
 | `CapsLock + H` | 同上，但**带** `messages` 上下文，可以连续追问 |
 | `CapsLock + O` | 打开历史面板，可查看 / 复制 / 编辑 / 删除 / 导出 |
+| `CapsLock + K` | 剪贴板是链接就用默认浏览器打开 |
 
 所有问答都会自动记入历史面板。
+
+### 链接打开（CapsLock + K）
+
+剪贴板里是链接时，用默认浏览器打开。支持的写法：
+
+```
+https://github.com/LinXi-ovo/CapQ      完整链接
+github.com/LinXi-ovo/CapQ              裸域名（自动补 https://）
+https://a.com/x。                       中文标点结尾会自动去掉
+"https://a.com/x"                      包裹的引号会去掉
+<https://a.com/x>                      尖括号会去掉
+[点我](https://a.com/x)                Markdown 链接
+去 https://a.com/x 看看                 句中的第一个链接
+//a.com/x                              协议相对
+```
+
+**只放行 `http` / `https`。** `file://`、`javascript:`、`data:`、`ms-settings:`
+这类协议一律拒绝——剪贴板是不可信输入，把它们交给系统等于开了个任意程序启动的口子。
+
+裸域名识别用了 TLD 白名单，且**故意不含** `md` / `py` / `js` / `sh` 这类
+既是域名后缀又是常见文件后缀的，所以复制 `README.md` 不会被当成链接打开。
 
 ## 三条链路的关键区别
 
@@ -78,10 +100,12 @@ lib/
   Session.ahk       messages 数组管理与上下文裁剪
   History.ahk       本地问答历史（JSONL）
   Panel.ahk         历史面板 + 编辑面板
+  Url.ahk           链接识别与打开（只放行 http/https）
   Notify.ahk        系统通知与降级
   Log.ahk           按天切分日志
 tests/
   smoke.ahk         冒烟测试（Config/Log/Clip/History/Session/Ai/Http）
+  url.ahk           链接识别测试（含危险协议拒绝）
   json_roundtrip.ahk
   e2e2.ahk          真实接口端到端测试
 ```

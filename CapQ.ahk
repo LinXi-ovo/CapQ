@@ -4,6 +4,7 @@
  *   CapsLock + A  → 无历史单轮提问（不碰 messages 数组）
  *   CapsLock + H  → 带历史多轮提问（读写 messages 数组）
  *   CapsLock + O  → 打开历史问答面板
+ *   CapsLock + K  → 剪贴板是链接就用默认浏览器打开
  *
  * 核心约束（见 docs/designs）：
  *   1. 热键回调内绝不做 IO —— 一律投递/异步（curl 子进程 + SetTimer）
@@ -33,6 +34,7 @@ SetCapsLockState "AlwaysOff"
 #Include lib\Session.ahk
 #Include lib\Ai.ahk
 #Include lib\Panel.ahk
+#Include lib\Url.ahk
 
 ; ─────────────────────────────────────────────────────────
 ; 全局错误处理：只写日志，绝不弹窗
@@ -87,6 +89,7 @@ CapsLock::return                                 ; 单按 CapsLock 无动作
 CapsLock & a::Ai.AskQuick()
 CapsLock & h::Ai.AskWithHistory()
 CapsLock & o::HistoryPanel.Toggle()
+CapsLock & k::Url.OpenClipboard()
 
 ; ─────────────────────────────────────────────────────────
 ; 托盘
@@ -99,6 +102,7 @@ InitTray() {
     m.Add("历史面板 (CapsLock+O)", (*) => HistoryPanel.Toggle())
     m.Add("无历史提问 (CapsLock+A)", (*) => Ai.AskQuick())
     m.Add("带历史提问 (CapsLock+H)", (*) => Ai.AskWithHistory())
+    m.Add("打开剪贴板链接 (CapsLock+K)", (*) => Url.OpenClipboard())
     m.Add()
     m.Add("打开配置 config.ini", (*) => Run(Config.iniPath))
     m.Add("打开日志目录", (*) => Run(Config.dataDir "\logs"))
